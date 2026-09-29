@@ -42,7 +42,12 @@ void main() {
     while (DateTime.now().isBefore(limite)) {
       await Future<void>.delayed(const Duration(milliseconds: 100));
       await tester.pump();
-      if (alvo.evaluate().isNotEmpty) return;
+      if (alvo.evaluate().isNotEmpty) {
+        // Deixa acabar a passagem entre telas: a tela anterior ainda está a desaparecer.
+        await Future<void>.delayed(const Duration(milliseconds: 400));
+        await tester.pump();
+        return;
+      }
     }
     await captura(tester, 'falha');
     throw TestFailure('Não apareceu no ecrã: $alvo');
