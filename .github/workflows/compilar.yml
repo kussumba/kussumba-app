@@ -118,25 +118,27 @@ jobs:
           xcrun simctl boot "$UDID"
           # Espera que o iPhone simulado acabe de arrancar antes de instalar a aplicação.
           xcrun simctl bootstatus "$UDID" -b
-          # Às vezes o simulador não chega a avisar o flutter drive de que a aplicação arrancou.
-          # Nesse caso (e só nesse), fecha a aplicação e tenta outra vez, até três vezes.
+          # Às vezes o simulador não chega a avisar o flutter drive de que a aplicação arrancou, e o
+          # flutter drive sai sem correr o percurso. Só conta como passado se o percurso disser que passou;
+          # se não chegou a correr, fecha a aplicação e tenta outra vez, até três vezes.
           for tentativa in 1 2 3; do
             flutter drive --verbose --driver=test_driver/integration_test.dart --target=integration_test/percurso_test.dart -d "$UDID" > drive.log 2>&1 &
             drive=$!
             ( sleep 600; kill "$drive" 2>/dev/null ) &
             vigia=$!
-            if wait "$drive"; then
-              kill "$vigia" 2>/dev/null || true
-              tail -n 40 drive.log
+            wait "$drive" || true
+            kill "$vigia" 2>/dev/null || true
+            if grep -q "All tests passed" drive.log; then
+              grep -E "flutter: [0-9]{2}:[0-9]{2} \+" drive.log | tail -n 5
               exit 0
             fi
-            kill "$vigia" 2>/dev/null || true
-            if ! tail -n 3 drive.log | grep -q "Waiting for VM Service"; then
+            if grep -q -E "Some tests failed|Failure Details" drive.log; then
               tail -n 150 drive.log
               exit 1
             fi
-            echo "Tentativa $tentativa: a aplicação não respondeu ao flutter drive; a repetir."
+            echo "Tentativa $tentativa: o percurso não chegou a correr; a repetir."
             xcrun simctl terminate "$UDID" io.github.kussumba.app || true
+            sleep 20
           done
           tail -n 150 drive.log
           exit 1

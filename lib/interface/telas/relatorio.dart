@@ -130,7 +130,7 @@ class _NumerosDoMes extends StatelessWidget {
   final Relatorio relatorio;
   final bool fechado;
 
-  Widget _numero(String rotulo, int valor, {bool destaque = false, bool excedido = false}) {
+  Widget _numero(String rotulo, int valor, double tamanhoLetra, {bool destaque = false, bool excedido = false}) {
     final fundo = excedido ? Cores.subida : (destaque ? Cores.verde : Cores.superficie);
     final frente = destaque ? Colors.white : Cores.tinta;
     return Expanded(
@@ -155,7 +155,7 @@ class _NumerosDoMes extends StatelessWidget {
               fit: BoxFit.scaleDown,
               alignment: Alignment.centerLeft,
               child: Text(formatarNumero(valor),
-                  style: TextStyle(fontFamily: fonte, fontSize: Letra.destaque, fontWeight: FontWeight.w700, color: frente)),
+                  style: TextStyle(fontFamily: fonte, fontSize: tamanhoLetra, fontWeight: FontWeight.w700, color: frente)),
             ),
           ]),
         ),
@@ -167,17 +167,20 @@ class _NumerosDoMes extends StatelessWidget {
   Widget build(BuildContext context) {
     final r = relatorio;
     final rotuloSobra = r.ultrapassado ? 'Ultrapassou' : (fechado ? 'Sobrou' : 'Sobra');
+    // Como na versão web (clamp(15px, 4,4vw, 17px)): os três números com a mesma letra, que acompanha
+    // a largura do ecrã. Com letra grande, se ainda não couberem, encolhem dentro da caixa.
+    final tamanhoLetra = (MediaQuery.sizeOf(context).width * 0.044).clamp(15.0, Letra.destaque);
     return Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
       Semantics(
         label: 'Resumo em Kz',
         explicitChildNodes: true,
         child: IntrinsicHeight(
           child: Row(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-            _numero('Plafond', r.plafond),
+            _numero('Plafond', r.plafond, tamanhoLetra),
             const SizedBox(width: 8),
-            _numero('Gasto', r.gasto),
+            _numero('Gasto', r.gasto, tamanhoLetra),
             const SizedBox(width: 8),
-            _numero(rotuloSobra, r.sobrou.abs(), destaque: true, excedido: r.ultrapassado),
+            _numero(rotuloSobra, r.sobrou.abs(), tamanhoLetra, destaque: true, excedido: r.ultrapassado),
           ]),
         ),
       ),
