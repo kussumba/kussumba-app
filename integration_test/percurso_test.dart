@@ -18,7 +18,7 @@ import 'package:path/path.dart' as caminhos;
 import 'package:sqflite/sqflite.dart';
 
 /// Espaço inseparável depois de um algarismo, como a interface mostra os valores em Kz.
-String ui(String texto) => texto.replaceAllMapped(RegExp(r'(\d) '), (m) => '${m[1]} ');
+String ui(String texto) => texto.replaceAllMapped(RegExp(r'(\d) '), (m) => '${m[1]}\u00A0');
 
 void main() {
   final binding = IntegrationTestWidgetsFlutterBinding.ensureInitialized();
