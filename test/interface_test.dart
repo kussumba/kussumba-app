@@ -198,6 +198,30 @@ void main() {
     await _captura(tester, '07_copia');
   });
 
+  testWidgets('percurso de um mês, o mesmo que corre no telemóvel', (tester) async {
+    relogio(2026, 9, 18);
+    await _abrir(tester, 'mes');
+    await tester.enterText(find.byType(TextField), '250000');
+    await _tocar(tester, find.text('Continuar'));
+    await _tocar(tester, find.text('Começar com produtos sugeridos'));
+    expect(find.text('Lista de Setembro'), findsOneWidget);
+
+    await _tocar(tester, find.text('Arroz'));
+    await tester.enterText(find.byType(TextField).last, '32000');
+    await _tocar(tester, find.text('Guardar'));
+    expect(find.text('Preço previsto para esta quantidade'), findsNothing, reason: 'a folha fecha ao guardar');
+    expect(find.text(ui('32 000 Kz')), findsWidgets);
+
+    await _tocar(tester, find.text('Comprar').last);
+    await tester.enterText(find.byType(TextField), 'Grossista Kikolo');
+    await _tocar(tester, find.text('Começar a registar'));
+    for (final tecla in ['3', '2', '000']) {
+      await _tocar(tester, find.text(tecla));
+    }
+    await _tocar(tester, find.text('Guardar e seguinte'));
+    expect(find.text('1 de 10 artigos registados · faltam 9'), findsOneWidget);
+  });
+
   testWidgets('a barra inferior leva às quatro telas principais', (tester) async {
     await tester.runAsync(setembroComCompras);
     await _abrir(tester, 'mes');

@@ -24,32 +24,6 @@ void main() {
   final binding = IntegrationTestWidgetsFlutterBinding.ensureInitialized();
   var superficieConvertida = false;
 
-  /// Espera, em tempo real, que a base de dados responda e o elemento apareça.
-  Future<void> esperarPor(WidgetTester tester, Finder alvo) async {
-    final limite = DateTime.now().add(const Duration(seconds: 30));
-    while (DateTime.now().isBefore(limite)) {
-      await Future<void>.delayed(const Duration(milliseconds: 100));
-      await tester.pump();
-      if (alvo.evaluate().isNotEmpty) return;
-    }
-    throw TestFailure('Não apareceu no ecrã: $alvo');
-  }
-
-  /// Tira os avisos do ecrã, para não taparem o botão seguinte.
-  void semAvisos(WidgetTester tester) => tester.state<ScaffoldMessengerState>(find.byType(ScaffoldMessenger)).clearSnackBars();
-
-  /// Toca como uma pessoa: fecha o teclado do ecrã e espera que ele saia antes de tocar.
-  Future<void> tocar(WidgetTester tester, Finder alvo) async {
-    semAvisos(tester);
-    FocusManager.instance.primaryFocus?.unfocus();
-    await Future<void>.delayed(const Duration(milliseconds: 800));
-    await tester.pump();
-    await tester.ensureVisible(alvo);
-    await tester.pump();
-    await tester.tap(alvo);
-    await tester.pump();
-  }
-
   Future<void> captura(WidgetTester tester, String nome) async {
     // No Android, a superfície do Flutter tem de passar a imagem antes da primeira captura.
     if (Platform.isAndroid && !superficieConvertida) {
@@ -59,6 +33,46 @@ void main() {
     await Future<void>.delayed(const Duration(milliseconds: 400));
     await tester.pump();
     await binding.takeScreenshot(nome);
+  }
+
+  /// Espera, em tempo real, que a base de dados responda e o elemento apareça.
+  /// Se não aparecer, guarda uma captura do ecrã para se ver o que lá estava.
+  Future<void> esperarPor(WidgetTester tester, Finder alvo) async {
+    final limite = DateTime.now().add(const Duration(seconds: 30));
+    while (DateTime.now().isBefore(limite)) {
+      await Future<void>.delayed(const Duration(milliseconds: 100));
+      await tester.pump();
+      if (alvo.evaluate().isNotEmpty) return;
+    }
+    await captura(tester, 'falha');
+    throw TestFailure('Não apareceu no ecrã: $alvo');
+  }
+
+  /// Tira os avisos do ecrã, para não taparem o botão seguinte.
+  void semAvisos(WidgetTester tester) => tester.state<ScaffoldMessengerState>(find.byType(ScaffoldMessenger)).clearSnackBars();
+
+  /// Fecha o teclado do ecrã e espera que ele saia de facto e que a página se ajuste ao espaço livre.
+  Future<void> tecladoFechado(WidgetTester tester) async {
+    FocusManager.instance.primaryFocus?.unfocus();
+    final limite = DateTime.now().add(const Duration(seconds: 5));
+    while (DateTime.now().isBefore(limite)) {
+      await Future<void>.delayed(const Duration(milliseconds: 100));
+      await tester.pump();
+      if (tester.view.viewInsets.bottom == 0) break;
+    }
+    await Future<void>.delayed(const Duration(milliseconds: 600));
+    await tester.pump();
+  }
+
+  /// Toca como uma pessoa: sem teclado nem avisos à frente, com o elemento já parado no ecrã.
+  Future<void> tocar(WidgetTester tester, Finder alvo) async {
+    semAvisos(tester);
+    await tecladoFechado(tester);
+    await tester.ensureVisible(alvo);
+    await Future<void>.delayed(const Duration(milliseconds: 300));
+    await tester.pump();
+    await tester.tap(alvo);
+    await tester.pump();
   }
 
   testWidgets('percurso de um mês: do plafond ao relatório', (tester) async {
@@ -97,16 +111,14 @@ void main() {
     await tocar(tester, find.text('Começar a registar'));
     await esperarPor(tester, find.text('Guardar e seguinte'));
     for (final tecla in ['3', '2', '000']) {
-      await tester.tap(find.text(tecla));
-      await tester.pump();
+      await tocar(tester, find.text(tecla));
     }
     expect(find.text(ui('32 000 Kz')), findsWidgets);
     await captura(tester, '03_comprar');
     await tocar(tester, find.text('Guardar e seguinte'));
     await esperarPor(tester, find.text('1 de 10 artigos registados · faltam 9'));
     for (final tecla in ['9', '5', '0', '0']) {
-      await tester.tap(find.text(tecla).first);
-      await tester.pump();
+      await tocar(tester, find.text(tecla).first);
     }
     await tocar(tester, find.text('Guardar e seguinte'));
     await esperarPor(tester, find.text('2 de 10 artigos registados · faltam 8'));
