@@ -36,6 +36,10 @@ dependencies:
   cupertino_icons: ^1.0.8
   sqflite: ^2.4.4
   path: ^1.9.1
+  flutter_svg: ^2.3.0
+  file_picker: ^13.1.0
+  flutter_localizations:
+    sdk: flutter
 
 dev_dependencies:
   flutter_test:
@@ -59,6 +63,21 @@ flutter:
   # included with your application, so that you can use the icons in
   # the material Icons class.
   uses-material-design: true
+
+  # A letra da KUSSUMBA, a mesma da versão web (licença OFL em fontes/OFL.txt).
+  fonts:
+    - family: DM Sans
+      fonts:
+        - asset: fontes/DMSans-400.ttf
+          weight: 400
+        - asset: fontes/DMSans-500.ttf
+          weight: 500
+        - asset: fontes/DMSans-600.ttf
+          weight: 600
+        - asset: fontes/DMSans-700.ttf
+          weight: 700
+        - asset: fontes/DMSans-800.ttf
+          weight: 800
 
   # To add assets to your application, add an assets section, like this:
   # assets:
