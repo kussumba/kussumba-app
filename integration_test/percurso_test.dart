@@ -38,8 +38,11 @@ void main() {
   /// Tira os avisos do ecrã, para não taparem o botão seguinte.
   void semAvisos(WidgetTester tester) => tester.state<ScaffoldMessengerState>(find.byType(ScaffoldMessenger)).clearSnackBars();
 
+  /// Toca como uma pessoa: fecha o teclado do ecrã e espera que ele saia antes de tocar.
   Future<void> tocar(WidgetTester tester, Finder alvo) async {
     semAvisos(tester);
+    FocusManager.instance.primaryFocus?.unfocus();
+    await Future<void>.delayed(const Duration(milliseconds: 800));
     await tester.pump();
     await tester.ensureVisible(alvo);
     await tester.pump();
